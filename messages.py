@@ -1,6 +1,6 @@
 '''
 author: Michael A. Reiter
-
+(c) ETH Zurich, Michael A. Reiter, 2022
 
 This file is part of Dashing Growth Curves.
 
@@ -8,7 +8,7 @@ Dashing Growth Curves is free software: you can redistribute it and/or modify it
 
 Dashing Growth Curves is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with Foobar. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with Dashing Growth Curves. If not, see <https://www.gnu.org/licenses/>.
 '''
 
 
