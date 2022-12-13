@@ -1,0 +1,9 @@
+growth_rate_app
+*.pyc
+.DS_Store
+.env
+*.db
+*.db-shm
+*.db-wal
+*.csv
+app_testing.py

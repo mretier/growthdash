@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans');
+.opensans {
+  font-family: "Open Sans", sans-serif;
+}
+* {
+  font-family: "Open Sans"
+}
+
+
+#top-row {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+
+body{
+  background-color: rgb(245, 245, 245);
+  min-width: 80em;
+  max-width: 90em;
+  margin-right: 80px;
+  margin-left: 80px;
+  /* horizontal-align: middle; */
+  /* display: table-cell */
+}
+
+/* html {
+    display: table;
+    margin: auto;
+} */
