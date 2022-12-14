@@ -20,5 +20,6 @@ COPY ./ ./
 # EXPOSE 8085
 
 # Run locally on port 8050
-CMD gunicorn --workers 4 --threads 4 --timeout 1200 --bind 0.0.0.0:8050 app:server
+# CMD gunicorn --workers 11 --threads 1 --timeout 1200 --bind 0.0.0.0:8050 app:server
 # ENTRYPOINT ["gunicorn", "--config", "gunicorn_config.py", "index:server"]
+CMD gunicorn --workers 11 --threads 1 --timeout 1200 --bind 0.0.0.0:8050 app:server
