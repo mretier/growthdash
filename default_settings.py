@@ -1,6 +1,6 @@
 '''
 author: Michael A. Reiter
-
+(c) ETH Zurich, Michael A. Reiter, 2022
 
 This file is part of Dashing Growth Curves.
 

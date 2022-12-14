@@ -22,7 +22,7 @@ from dash import dcc
 ### tooltips
 tooltip_sample_name = 'Enter a sample name that\'s unique and different from the location identifier. For replicates add a replicate identifier to the sample name (e.g. \'_1\' or \' 1\')'
 tooltip_blanks = 'Enter a comma-separated list of sample names which will be used as blanks for the current sample.'
-tooltip_popsizemeasure = 'Provide name of method used to measure population size'
+tooltip_popsizemeasure = 'Provide name of method used to measure population size. For formatting use markdown.'
 tooltip_data_smoothing = 'Smooth data to remove noise using a sliding window of size {}'.format(ds.default_smoothing_window_size)
 tooltip_autofitting_button = 'Automatically detect exponential growth phases in data and extract growth parameters (individual samples can be adjusted afterwards) - computation may take a few minutes depending on the size of your dataset', 
 tooltip_autofitting_docs = 'Documentation of fitting algorithms'
@@ -67,5 +67,6 @@ upload_area = dcc.Markdown(
                                                                     
 
 data_privacy_text = dcc.Markdown('''
-    No data is stored on the server. {0} is open source. For sensitive data {0} can be installed [locally]('https://github.com/Dahlai/growthdash').
-                    '''.format(ds.app_name))
+    No data is stored on the server. {0} is open source. For sensitive data {0} can be installed [locally](https://github.com/Dahlai/growthdash)
+                    '''.format(ds.app_name)
+                    )

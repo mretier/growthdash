@@ -140,7 +140,7 @@ upload_div = dbc.Collapse([
                             dbc.Row([
                                     ax.create_link_button('Info', 'https://github.com/Dahlai/growthdash'),
                                     ax.create_link_button('Ask a question', 'https://github.com/Dahlai/growthdash/issues'),
-                                    ax.create_link_button('How to cite?', 'https://github.com/Dahlai/growthdash'),
+                                    ax.create_link_button('How to cite?', 'https://github.com/mretier/growthdash#how-to-cite'),
                                     dbc.Button(html.B('Download a sample file'), 
                                                 color='secondary', 
                                                 style={
@@ -378,10 +378,10 @@ settings_div = [
                                 width=4
                                 ),
                         dbc.Col([
-                                dcc.Markdown('<b>Fitting parameters</b>', 
-                                            style={'font-size': '14pt'}, 
-                                            dangerously_allow_html=True
-                                            )
+                                # dcc.Markdown('<b>Fitting parameters</b>', 
+                                #             style={'font-size': '14pt'}, 
+                                #             dangerously_allow_html=True
+                                #             )
                                 ], 
                                 width=4)
                         ]),
@@ -409,36 +409,37 @@ settings_div = [
                                 width=4
                                 ),
                         dbc.Col([
-                                html.B('Window size: ', 
-                                       style={
-                                                'display': 'inline-block', 
-                                                'width': '25%',
-                                              },
-                                        ),
-                                dcc.Input(value=ds.auto_fit_default_ws, 
-                                          id='input_auto_default_ws', 
-                                          debounce=True, 
-                                          style={
-                                                'margin-left': '10px', 
-                                                'width':'55%'
-                                                }
-                                        ),
-                                html.I(id='auto_default_sw_info', 
-                                        className='bi bi-info-circle-fill', 
-                                        style={
-                                                'color': 'darkslategray', 
-                                                'margin-left':'10px'
-                                                }
-                                        ),
-                                dbc.Tooltip(ms.tooltip_auto_ws, 
-                                            target='auto_default_sw_info'
-                                            )
+                                # html.B('Window size: ', 
+                                #        style={
+                                #                 'display': 'inline-block', 
+                                #                 'width': '25%',
+                                #               },
+                                #         ),
+                                # dcc.Input(value=ds.auto_fit_default_ws, 
+                                #           id='input_auto_default_ws', 
+                                #           debounce=True, 
+                                #           style={
+                                #                 'margin-left': '10px', 
+                                #                 'width':'55%'
+                                #                 }
+                                #         ),
+                                # html.I(id='auto_default_sw_info', 
+                                #         className='bi bi-info-circle-fill', 
+                                #         style={
+                                #                 'color': 'darkslategray', 
+                                #                 'margin-left':'10px'
+                                #                 }
+                                #         ),
+                                # dbc.Tooltip(ms.tooltip_auto_ws, 
+                                #             target='auto_default_sw_info'
+                                #             )
 
                                 ], 
                                 width=4, 
-                                style={'margin-bottom': '10px'}
                                 )
-                            ]),
+                            ],
+                            style={'margin-bottom': '10px'}
+                            ),
                 dbc.Row([
                         dbc.Col([
                                 html.B('Pop. size measure:'),
@@ -463,62 +464,64 @@ settings_div = [
                                 width=4
                                 ),
                         dbc.Col([
-                                html.B('Slope range: ', 
-                                        style={
-                                                'display': 'inline-block', 
-                                                'width': '25%'
-                                                }
-                                        ),
-                                dcc.Input(value=ds.auto_fit_default_sr, 
-                                          id='input_auto_default_sr', 
-                                          debounce=True, 
-                                          style={
-                                                'margin-left': '10px', 
-                                                'width': '55%'
-                                                }
-                                          ),
-                                html.I(id='auto_default_sr_info', 
-                                       className='bi bi-info-circle-fill', 
-                                       style={
-                                                'color': 'darkslategray', 
-                                                'margin-left':'10px'
-                                            }),
-                                dbc.Tooltip(ds.auto_fit_default_weight, target='auto_default_sr_info')
+                                # html.B('Slope range: ', 
+                                #         style={
+                                #                 'display': 'inline-block', 
+                                #                 'width': '25%'
+                                #                 }
+                                #         ),
+                                # dcc.Input(value=ds.auto_fit_default_sr, 
+                                #           id='input_auto_default_sr', 
+                                #           debounce=True, 
+                                #           style={
+                                #                 'margin-left': '10px', 
+                                #                 'width': '55%'
+                                #                 }
+                                #           ),
+                                # html.I(id='auto_default_sr_info', 
+                                #        className='bi bi-info-circle-fill', 
+                                #        style={
+                                #                 'color': 'darkslategray', 
+                                #                 'margin-left':'10px'
+                                #             }),
+                                # dbc.Tooltip(ds.auto_fit_default_weight, target='auto_default_sr_info')
 
                                 ], 
                                 width=4, 
-                                style={'margin-bottom': '10px'}
+
                                 )
-                        ]),
+                        ],
+                        style={'margin-bottom': '10px'},
+                        ),
                 dbc.Row([
                         dbc.Col([
                                 ], 
                                 width=4
                                 ),
                         dbc.Col([
-                                html.B('Weight: ', 
-                                        style={
-                                                'display': 'inline-block', 
-                                                'width': '25%'
-                                               }),
-                                dcc.Input(value=ds.auto_fit_default_weight, 
-                                          id='input_auto_default_weight', 
-                                          debounce=True, 
-                                          style={
-                                                'margin-left': '10px', 
-                                                'width':'55%'
-                                                }
-                                        ),
-                                html.I(id='auto_default_weight_info', 
-                                       className='bi bi-info-circle-fill', 
-                                       style={
-                                                'color': 'darkslategray', 
-                                                'margin-left':'10px'
-                                             }
-                                        ),
-                                dbc.Tooltip(ms.tooltip_auto_sr, 
-                                            target='auto_default_weight_info'
-                                            )
+                                # html.B('Weight: ', 
+                                #         style={
+                                #                 'display': 'inline-block', 
+                                #                 'width': '25%'
+                                #                }),
+                                # dcc.Input(value=ds.auto_fit_default_weight, 
+                                #           id='input_auto_default_weight', 
+                                #           debounce=True, 
+                                #           style={
+                                #                 'margin-left': '10px', 
+                                #                 'width':'55%'
+                                #                 }
+                                #         ),
+                                # html.I(id='auto_default_weight_info', 
+                                #        className='bi bi-info-circle-fill', 
+                                #        style={
+                                #                 'color': 'darkslategray', 
+                                #                 'margin-left':'10px'
+                                #              }
+                                #         ),
+                                # dbc.Tooltip(ms.tooltip_auto_sr, 
+                                #             target='auto_default_weight_info'
+                                #             )
 
                                 ], 
                                 width=4, 
@@ -1606,50 +1609,50 @@ def smooth_data(n_clicks, df, smoother_flag, input_smoother_ws):
 
 
 
-@app.callback(
-                Output('store_auto_fit_ws', 'data'),
-                Output('input_auto_default_ws', 'value'),
+# @app.callback(
+#                 Output('store_auto_fit_ws', 'data'),
+#                 Output('input_auto_default_ws', 'value'),
 
 
-                Output('store_auto_fit_slope_range', 'data'),
-                Output('input_auto_default_sr', 'value'),
+#                 Output('store_auto_fit_slope_range', 'data'),
+#                 Output('input_auto_default_sr', 'value'),
 
-                Output('store_auto_fit_r2_var_weight', 'data'),
-                Output('input_auto_default_weight', 'value'),
+#                 Output('store_auto_fit_r2_var_weight', 'data'),
+#                 Output('input_auto_default_weight', 'value'),
 
-                Output('message_area_fits_parameters', 'children'),
-                Input('input_auto_default_ws', 'value'),
-                Input('input_auto_default_sr', 'value'),
-                Input('input_auto_default_weight', 'value'),
-                State('store_auto_fit_ws', 'data'),
-                State('store_auto_fit_slope_range', 'data'),
-                State('store_auto_fit_r2_var_weight', 'data'),
-                prevent_initial_call = True
-)
-def set_auto_fit_ws_store(ws_value_in, sr_value_in, weight_value_in, ws_value_old, sr_value_old, weight_value_old):
-    if dash.callback_context.triggered[0]['prop_id'] == 'input_auto_default_ws.value':
-        try:
-            v_int = int(ws_value_in)
-            return v_int, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
-        except:
-            alert = ax.generate_alert(ms.error_manual_like_fit_ws)
-            return dash.no_update, ws_value_old, dash.no_update, dash.no_update, dash.no_update, dash.no_update, alert
+#                 Output('message_area_fits_parameters', 'children'),
+#                 Input('input_auto_default_ws', 'value'),
+#                 Input('input_auto_default_sr', 'value'),
+#                 Input('input_auto_default_weight', 'value'),
+#                 State('store_auto_fit_ws', 'data'),
+#                 State('store_auto_fit_slope_range', 'data'),
+#                 State('store_auto_fit_r2_var_weight', 'data'),
+#                 prevent_initial_call = True
+# )
+# def set_auto_fit_ws_store(ws_value_in, sr_value_in, weight_value_in, ws_value_old, sr_value_old, weight_value_old):
+#     if dash.callback_context.triggered[0]['prop_id'] == 'input_auto_default_ws.value':
+#         try:
+#             v_int = int(ws_value_in)
+#             return v_int, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+#         except:
+#             alert = ax.generate_alert(ms.error_manual_like_fit_ws)
+#             return dash.no_update, ws_value_old, dash.no_update, dash.no_update, dash.no_update, dash.no_update, alert
     
-    if dash.callback_context.triggered[0]['prop_id'] == 'input_auto_default_sr.value':
-        try:
-            v_float = float(sr_value_in)
-            return dash.no_update, dash.no_update, v_float, dash.no_update, dash.no_update, dash.no_update, dash.no_update
-        except:
-            alert = ax.generate_alert(ms.error_manual_like_fit_sr)
-            return dash.no_update, dash.no_update, dash.no_update, sr_value_old, dash.no_update, dash.no_update, alert
+#     if dash.callback_context.triggered[0]['prop_id'] == 'input_auto_default_sr.value':
+#         try:
+#             v_float = float(sr_value_in)
+#             return dash.no_update, dash.no_update, v_float, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+#         except:
+#             alert = ax.generate_alert(ms.error_manual_like_fit_sr)
+#             return dash.no_update, dash.no_update, dash.no_update, sr_value_old, dash.no_update, dash.no_update, alert
      
-    if dash.callback_context.triggered[0]['prop_id'] == 'input_auto_default_weight.value':
-        try:
-            v_float = float(weight_value_in)
-            return dash.no_update, dash.no_update, dash.no_update, dash.no_update, v_float, dash.no_update, dash.no_update
-        except:
-            alert = ax.generate_alert(ms.error_manual_like_fit_w)
-            return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, weight_value_old, alert
+#     if dash.callback_context.triggered[0]['prop_id'] == 'input_auto_default_weight.value':
+#         try:
+#             v_float = float(weight_value_in)
+#             return dash.no_update, dash.no_update, dash.no_update, dash.no_update, v_float, dash.no_update, dash.no_update
+#         except:
+#             alert = ax.generate_alert(ms.error_manual_like_fit_w)
+#             return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, weight_value_old, alert
             
 
 
