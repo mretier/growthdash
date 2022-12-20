@@ -39,7 +39,8 @@ tooltip_csv_download = dcc.Markdown('t0: start of log phase<br>t1: end of log-ph
 
 ### error messages
 error_upload_file = 'Could not read file. File needs to be either Excel file or semicolon-separated .csv file'
-
+error_upload_duplicate_t_non_float = 'All data points need to be of numerical type (i.e. numbers or NaN). Time point values need to be unique (e.g. cannot have two separate columns each with time point value 1.3) '
+error_duplicate_samples = 'Duplicate sample names are not allowed, please make sure that each sample is associated with a unique name and/or indicate replicates with digits (e.g.  \" test_sample 1\").'
 error_blank_name = 'Invalid blank name. All blank names need to be existing sample names.'
 error_blank_location = 'Invalid blank locations. All blank names need to be existing sample names.'
 error_duplicate_sample = 'Duplicate sample name. Sample names need to be unique. For replicates append number to sample name (e.g. test 5)'

@@ -136,7 +136,8 @@ upload_div = dbc.Collapse([
                                             'margin-bottom': '2em',
                                             }
                                     ),
-                            
+                            html.Div(id='upload_alert_area'),   # error messages during upload are sent to this div
+
                             dbc.Row([
                                     ax.create_link_button('Info', 'https://github.com/Dahlai/growthdash'),
                                     ax.create_link_button('Ask a question', 'https://github.com/Dahlai/growthdash/issues'),
@@ -179,8 +180,7 @@ upload_div = dbc.Collapse([
                                             'text-align': 'center',
                                             }
                                     ),
-                            html.Div(id='upload_alert_area'),   # error messages during upload are sent to this div
-
+                            
                             
                             dbc.Collapse([
                                             html.H1('Data structure:', 
@@ -826,6 +826,8 @@ app.layout = html.Div(
     Output('div_upload_collapsible', 'is_open'),
     Output('store_upload_flag', 'data'),
     Output('upload_alert_area', 'children'),
+    Output('upload', 'contents'),   # needs to reset to None after each upload to support uploading the same file twice (happens if the initial upload contained errors)
+    Output('upload', 'filename'),   # see line above (https://github.com/plotly/dash-core-components/issues/816#issuecomment-1032635061)
     Input('upload', 'contents'),
     Input('upload', 'filename'),
     State('store_upload_flag', 'data'),
@@ -834,7 +836,7 @@ app.layout = html.Div(
 def load_data_page(contents, filename, upload_flag):
     # handle and format uploaded data
     if contents is None:
-        return dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, dash.no_update, dash.no_update, None, None
 
     else:
         # load data
@@ -847,14 +849,16 @@ def load_data_page(contents, filename, upload_flag):
             df = pd.read_excel(decoded)
         else:
             upload_alert = ax.generate_alert(ms.error_upload_file)
-            return dash.no_update, dash.no_update, dash.no_update, upload_alert
+            return dash.no_update, dash.no_update, dash.no_update, upload_alert, None, None
 
         # check if entries can be cast to float
         try:
             df.iloc[:, 1:].astype(float)
+            df.columns[1:].astype(float)
         except:
-            upload_alert = dbc.Alert('Make sure all data entries are of numerical type (i.e. numbers or NaN)')
-            return dash.no_update, dash.no_update, dash.no_update, upload_alert
+            upload_alert = ax.generate_alert(ms.error_upload_duplicate_t_non_float)
+            print('xxx')
+            return dash.no_update, dash.no_update, dash.no_update, upload_alert, None, None
 
         # format uploaded data
         df.set_index(df.iloc[:,0].values, inplace=True)
@@ -864,9 +868,9 @@ def load_data_page(contents, filename, upload_flag):
 
         if len(set(df[[not x for x in df.index == '-']].index)) + df[df.index == '-'].shape[0] != df.shape[0]:
             # check for duplicate sample names
-            upload_alert = dbc.Alert('Duplicate sample names are not allowed, please make sure that each sample is associated with a unique name and/or indicate replicates with digits (e.g.  \" test_sample 1\").', duration=10000, color='danger')
-            return dash.no_update, dash.no_update, dash.no_update, upload_alert
-    return df.to_dict('tight'), False, True, ''
+            upload_alert = ax.generate_alert(ms.error_duplicate_samples)
+            return dash.no_update, dash.no_update, dash.no_update, upload_alert, None, None
+    return df.to_dict('tight'), False, True, '', None, None
 
 
 @app.callback(
