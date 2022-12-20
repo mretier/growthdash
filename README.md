@@ -3,7 +3,7 @@ Dashing Growth Curves is an open-source web app (http://dashing-growth-curves.et
 ## Latest release notes
 2022-12-15 first release
 ## How to cite
-If you found Dashing Growth Curves useful for your work please cite the the most current associated publication: *INSERT CITATION*
+If you found Dashing Growth Curves useful for your work please cite the the most current associated publication: https://www.biorxiv.org/content/10.1101/2022.12.16.520708v1
 ## Questions and Bug reports
 Please refer to the issues section and feel free to ask a question.
 I can also be found on Twitter @mRetier or Mastodon @mreiter@ecoevo.social
