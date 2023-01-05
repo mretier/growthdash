@@ -7,3 +7,4 @@ growth_rate_app
 *.db-wal
 *.csv
 app_testing.py
+cashe/
