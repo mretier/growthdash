@@ -13,6 +13,7 @@ Local installation requires basic conding knowledge.
 2. Install Python 3.11
 3. Make a new virtual environment and activate it
 4. Go to the directory you wish to install Dashing Growth Curves in
-5. Clone the Dashing Growth Curves repository: `https://github.com/mretier/growthdash.git`
+5. Clone the Dashing Growth Curves repository: `git clone https://github.com/mretier/growthdash.git`
+6. Install all required python packages from the `requirements.txt` file: `pip install -r requirements.txt`
 6. Start the app with `python ./app.py`
 7. Open a new browser window and go to `http://127.0.0.1:8050/`, this should start the application and it should behave the same way the web version does.
