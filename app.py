@@ -1591,10 +1591,11 @@ def update_smoother_ws_tooltip(smoothing_ws, smoother_flag):
 )
 def smooth_data(n_clicks, df, smoother_flag, input_smoother_ws):
     alert_ws = ax.generate_alert(ms.error_smoother_ws)
+    print(input_smoother_ws)
+    print(int(input_smoother_ws))
     try:
-        input_smoother_ws = np.int(input_smoother_ws)
+        input_smoother_ws = int(input_smoother_ws)
     except:
-        
         return dash.no_update, dash.no_update, dash.no_update, alert_ws, dash.no_update
     
     if input_smoother_ws <= 0:

@@ -8,3 +8,4 @@ growth_rate_app
 *.csv
 app_testing.py
 cashe/
+app_testing.py

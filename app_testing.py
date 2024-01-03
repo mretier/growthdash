@@ -28,21 +28,19 @@ def comp_R2(xdata, ydata, popt):
     return r2
 
 
-def modified_gompertz(x, A, mu, l):
-    # modified Gompertz function from "Modeling of the Bacterial Growth Curve", Zwittering et al, 1990
-    return A * np.exp(- np.exp(mu * np.exp(1) / A * (l - x) + 1))
+
 
 def modified_richards(x, A, mu, l, v):
     # modified Richards function from "Modeling of the Bacterial Growth Curve", Zwittering et al, 1990
     return A * (1 + v * np.exp(1 + v) * np.exp(mu / A * (1 + 1 / v) * (1 + v) * (l - x)))**(-1/v)
 
 
-df = pd.read_excel('./../20220909_r41_to_r44_growthcurves_mineraloil_test_1.xlsx')
-
-mu
+df = pd.read_excel('./../sample_file.xlsx')
 
 
-y = df.iloc[18, 1:]
+
+
+y = df.iloc[3, 1:]
 blank = df.iloc[0, 1:]
 
 y_b = y - blank
@@ -64,7 +62,10 @@ y_log_clean = r.values[nan_inf_mask]
 x_clean = x[nan_inf_mask]
 
 
+# popt, pcov = curve_fit(modified_richards, x_clean, y_log_clean, p0=[2, 0.5, 0.5, 2], bounds=[[0, 0, -np.inf, 0], [np.inf, np.inf, np.inf, np.inf]], maxfev=100000)
+
 popt, pcov = curve_fit(modified_richards, x_clean, y_log_clean, p0=[2, 0.5, 0.5, 2], bounds=[[0, 0, -np.inf, 0], [np.inf, np.inf, np.inf, np.inf]], maxfev=100000)
+
 popt[1]
 popt[3]
 popt_log, pcov_log = curve_fit(modified_gompertz, x_clean, y_log_clean, p0=[2, 0.5, 0.5], bounds=[[0, 0, -np.inf], [np.inf, np.inf, np.inf]], maxfev=100000)
@@ -84,7 +85,7 @@ v_std = np.sqrt(pcov[3, 3])
 x_clean
 y_fit = modified_richards(x_clean, A, mu, l, v)
 
-np.gradient(y_fit).max()
+
 A
 mu
 l
