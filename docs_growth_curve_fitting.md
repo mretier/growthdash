@@ -36,7 +36,7 @@ Briefly, the algorithms is as follows:
 2. For all subsegments of the data of size $ws$ (the window size is defined by the user):
     - Fit a line through the datapoints of the subsegement
     - Record the slope which is equivalent to a growth rate estimate for this time interval
-3. Determine the subsegment with maximum slope (i.e., highest growth rate). This segment defines the maximum achieved growth rate ($mu_{max}$), the end of the lag phase and the end of the exponential phase.
+3. Determine the subsegment with maximum slope (i.e., highest growth rate). This segment defines the maximum achieved growth rate ($\mu_{max}$), the end of the lag phase and the end of the exponential phase.
 
 # References
 [^1]: [Ghenu et al., 2022](https://doi.org/10.1101/2022.06.24.497412)
