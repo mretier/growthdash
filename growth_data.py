@@ -51,42 +51,13 @@ def format_output_strings(mu, mu_std, dt, dt_std, t0, t0_std, doublings, doublin
     out_doublings_log = dcc.Markdown('doublings in log-phase = {0:.2f} &plusmn; {1:.2f}'.format(doublings_log, doublings_log_std))
     out_yield = dcc.Markdown('yield \[{0}\] = {1:.2f}'.format(pop_size_measure, maxOD), dangerously_allow_html=True)
     
-    if (fitting_mode == 'Manual') or (fitting_mode == 'Manual-like'):
+    if (fitting_mode == 'Manual') or (fitting_mode == 'Manual-like') or (fitting_mode == 'Easy Linear'):
         out_error = dcc.Markdown('R<sup>2</sup> = {0:.3f}'.format(error), dangerously_allow_html=True)
     else:
         out_error = dcc.Markdown('RMSE = {0:.3f}'.format(error))
     return out_growth_rate, out_doubling_time, out_lag_time, out_doublings, out_doublings_log, out_yield, out_error
 
 
-
-def compute_doublings_exp(A_u, mu_u, l_u, v_u, fitting_algorithm):
-    # compute beginning and end of exponential phase and number of doublings in exponential phase when fitting a sigmoid to the data
-    if fitting_algorithm == 'Logistic - tight':
-        t0_u = l_u + 0.17 * A_u / mu_u
-        t1_u = l_u + 0.83 * A_u / mu_u
-        ratio = ucn.exp(mf.modified_logistic(t1_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_logistic(l_u, A_u, mu_u, l_u))
-    elif fitting_algorithm == 'Logistic - conventional':
-        t0_u = l_u
-        t1_u = (A_u + mu_u * l_u) / mu_u # end of exponential phase
-        ratio = ucn.exp(mf.modified_logistic(t1_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_logistic(l_u, A_u, mu_u, l_u)) 
-    elif fitting_algorithm == 'Gompertz - tight':
-        t0_u = l_u + 0.014 * A_u / mu_u
-        t1_u = l_u + 0.72 * A_u / mu_u
-        ratio = ucn.exp(mf.modified_gompertz(t1_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_gompertz(l_u, A_u, mu_u, l_u))
-    elif fitting_algorithm == 'Gompertz - conventional':
-        t0_u = l_u
-        t1_u = (A_u + mu_u * l_u) / mu_u # end of exponential phase
-        ratio = ucn.exp(mf.modified_gompertz(t1_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_gompertz(l_u, A_u, mu_u, l_u))
-    elif fitting_algorithm == 'Richards':
-        t0_u = l_u
-        t1_u = (A_u + mu_u * l_u) / mu_u # end of exponential phase
-        ratio = ucn.exp(mf.modified_richards(t1_u, A_u, mu_u, l_u, v_u)) / ucn.exp(mf.modified_richards(l_u, A_u, mu_u, l_u, v_u))
-    elif fitting_algorithm == 'Schnute':
-        t0_u = l_u
-        t1_u = (A_u + mu_u * l_u) / mu_u # end of exponential phase
-        ratio = ucn.exp(mf.modified_schnute(t1_u, A_u, mu_u, l_u, v_u)) / ucn.exp(mf.modified_schnute(l_u, A_u, mu_u, l_u, v_u))
-    doublings_log_u = ucn.log(ratio) / ucn.log(2) 
-    return t0_u, t1_u, doublings_log_u
 
 
 def add_to_growth_data_dict(growth_data_data_sp, 
@@ -401,6 +372,7 @@ def register_gd_callbacks(app):
                               State('store_auto_fit_slope_range', 'data'),
                               State('store_auto_fit_r2_var_weight', 'data'),
                               State('dropdown_fitting_algorithms', 'value'),
+                              State('easy_linear_window_size', 'value'),
                               State('store_smoother_value', 'data'),
                               ],
                     background = True,
@@ -431,7 +403,7 @@ def register_gd_callbacks(app):
                     cancel = [Input('button_cancel_autofit', 'n_clicks')],
                     prevent_initial_call = True
     )
-    def auto_fit(set_progress, button_clicks, df, df_smoothed, smoother_flag, growth_rate_data, blank_locs, auto_fit_ws, auto_fit_sr, auto_fit_weight, fitting_algorithm, smoother_ws):
+    def auto_fit(set_progress, button_clicks, df, df_smoothed, smoother_flag, growth_rate_data, blank_locs, auto_fit_ws, auto_fit_sr, auto_fit_weight, fitting_algorithm, window_size, smoother_ws):
         # autofit on button press
         if growth_rate_data is None:
             return dash.no_update
@@ -482,7 +454,6 @@ def register_gd_callbacks(app):
                         continue
                     
                     # compute r2 value
-                    
                     r2 = mf.comp_R2(np.array(x), np.log(y), [popt_exp[1], np.log(popt_exp[0])])
 
 
@@ -518,15 +489,23 @@ def register_gd_callbacks(app):
                         # t1: beginning of stationary phase (i.e. end of exponential phase)
                         A, A_std, mu, mu_std, l, l_std, n0 = auto_fitting.autofit_gompertz(t, sample_trace_blanked)
 
-                        l_u = uc.ufloat(l, l_std)
-                        mu_u = uc.ufloat(mu, mu_std)
-                        A_u = uc.ufloat(A, A_std)
 
-                        
-                       
                         if (np.isnan(A)) or (np.isnan(mu_std)) or (mu_std == np.inf):
                             continue
                         
+                        A_u = uc.ufloat(A, A_std)
+                        mu_u = uc.ufloat(mu, mu_std)
+                        l_u = uc.ufloat(l, l_std)
+
+                        if fitting_algorithm == 'Gompertz - tight':
+                            t0_u = l_u + 0.014 * A_u / mu_u
+                            t1_u = l_u + 0.72 * A_u / mu_u
+                            ratio = ucn.exp(mf.modified_gompertz(t1_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_gompertz(l_u, A_u, mu_u, l_u))
+                        elif fitting_algorithm == 'Gompertz - conventional':
+                            t0_u = l_u
+                            t1_u = (A_u + mu_u * l_u) / mu_u # end of exponential phase
+                            ratio = ucn.exp(mf.modified_gompertz(t1_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_gompertz(l_u, A_u, mu_u, l_u))
+                        doublings_log_u = ucn.log(ratio) / ucn.log(2) 
                     
                     elif 'Logistic' in fitting_algorithm:
                         # A: carrying capacity
@@ -537,44 +516,39 @@ def register_gd_callbacks(app):
 
                         if (np.isnan(A)) or (np.isnan(mu_std)) or (mu_std == np.inf):
                             continue  
-                    
-                    # elif fitting_algorithm == 'Richards':
-                    #     # A: carrying capacity
-                    #     # mu: max growth rate
-                    #     # l: lag time (i.e. beginning of exponential phase)
-                    #     # v: shape parameter (no straight forward biological interpretation)
-                    #     # t1: beginning of stationary phase (i.e. end of exponential phase)
-                    #     A, A_std, mu, mu_std, l, l_std, v, v_std, n0 = auto_fitting.autofit_richards(t, sample_trace_blanked)
-                    #     if (A is None) or (mu_std is None) or (mu_std == np.inf) or (mu <= 0):
-                    #         continue  
+                        A_u = uc.ufloat(A, A_std)
+                        mu_u = uc.ufloat(mu, mu_std)
+                        l_u = uc.ufloat(l, l_std)
+                        if fitting_algorithm == 'Logistic - tight':
+                            t0_u = l_u + 0.17 * A_u / mu_u
+                            t1_u = l_u + 0.83 * A_u / mu_u
+                            ratio = ucn.exp(mf.modified_logistic(t1_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_logistic(l_u, A_u, mu_u, l_u))
 
+                        elif fitting_algorithm == 'Logistic - conventional':
+                            t0_u = l_u
+                            t1_u = (A_u + mu_u * l_u) / mu_u # end of exponential phase
+                            ratio = ucn.exp(mf.modified_logistic(t1_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_logistic(l_u, A_u, mu_u, l_u)) 
+                        doublings_log_u = ucn.log(ratio) / ucn.log(2) 
                     
-                    # elif fitting_algorithm == 'Schnute':
-                    #     # A: carrying capacity
-                    #     # mu: max growth rate
-                    #     # l: lag time (i.e. beginning of exponential phase)
-                    #     # v: shape parameter (no straight forward biological interpretation)
-                    #     # t1: beginning of stationary phase (i.e. end of exponential phase)
-                    #     A, A_std, mu, mu_std, l, l_std, v, v_std, n0 = auto_fitting.autofit_schnute(t, sample_trace_blanked)
-                    #     if (A is None) or (mu_std is None) or (mu_std == np.inf):
-                    #         continue  
+                    elif 'Easy Linear' in fitting_algorithm:
+                        # mu: max growth rate
+                        # l: lag time (i.e. beginning of exponential phase)
+                        # t1: beginning of stationary phase (i.e. end of exponential phase)
+                        t0, t1, mu, mu_std, y_intercept, y_intercept_std, R2_error = auto_fitting.autofit_easylinear(t, sample_trace_blanked, window_size)
+                        
+                        A_u = uc.ufloat(np.nan, np.nan)
+                        # n0 = mf.lin_function(t0, mu, y_intercept) / np.exp(mf.lin_function(t0, mu, y_intercept))
+                        n0 = np.exp(y_intercept)
+                        t0_u = uc.ufloat(t0, 0)
+                        t1_u = uc.ufloat(t1, 0)
+                        mu_u = uc.ufloat(mu, mu_std)
+                        y_intercept_u = uc.ufloat(y_intercept, y_intercept_std)
+
+                        ratio = ucn.exp(mf.lin_function(t1, mu_u, y_intercept_u)) / ucn.exp(mf.lin_function(t0, mu_u, y_intercept_u))
+                        doublings_log_u = ucn.log(ratio) / ucn.log(2)
+
                 
 
-                    # convert values to ufloats (easy error propagation)
-                    A_u = uc.ufloat(A, A_std)
-                    mu_u = uc.ufloat(mu, mu_std)
-                    l_u = uc.ufloat(l, l_std)
-                   
-                    if fitting_algorithm in ['Schnute', 'Richards']:
-                        v_u = uc.ufloat(v, v_std)
-                        growth_rate_data[sp]['v'] = v_u.n
-                        growth_rate_data[sp]['v'] = v_u.std_dev
-                    else:
-                        v_u = uc.ufloat(np.nan, np.nan)
-                    
-
-                    # compute number of doublings in exponential phase
-                    t0_u, t1_u, doublings_log_u = compute_doublings_exp(A_u, mu_u, l_u, v_u, fitting_algorithm)
                     # compute doubling time
                     dt_u = ucn.log(2) / mu_u
 
@@ -585,9 +559,8 @@ def register_gd_callbacks(app):
                     doublings = np.log2(sample_trace_blanked.max() / sample_trace_blanked[sample_trace_blanked > 0].min())
                    
                     # fill in data
-                    
-
-                    growth_rate_data[sp] = add_to_growth_data_dict(growth_rate_data[sp], 
+                    growth_rate_data[sp] = add_to_growth_data_dict(
+                                                growth_rate_data[sp], 
                                                 ax.format_value_for_store(t0_u.n), ax.format_value_for_store(t0_u.std_dev), 'NaN', 
                                                 ax.format_value_for_store(t1_u.n), ax.format_value_for_store(t1_u.std_dev), 'NaN',
                                                 ax.format_value_for_store(mu_u.n), ax.format_value_for_store(mu_u.std_dev),
@@ -601,7 +574,11 @@ def register_gd_callbacks(app):
                                                 smoothing_window=smoother_ws
                                                 )
                     t_fit, y_fit = ax.generate_fitted_curve(t, fitting_algorithm, growth_rate_data[sp], t.shape[0])
-                    rmse = mf.rmse(np.array(sample_trace_blanked), y_fit)
-                    growth_rate_data[sp]['error'] = rmse
+                    
+                    if 'Easy Linear' in fitting_algorithm:
+                        growth_rate_data[sp]['error'] = R2_error
+                    else:
+                        rmse = mf.rmse(np.array(sample_trace_blanked), y_fit)
+                        growth_rate_data[sp]['error'] = rmse
                    
         return growth_rate_data

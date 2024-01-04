@@ -316,7 +316,7 @@ additional_input = html.Div([
                                                         'margin-top': '1px'}
                                                 ), 
                                                 style={
-                                                        'width': '48%', 
+                                                        'width': '52%', 
                                                         'padding-right': 0
                                                         }
                                         ),
@@ -344,6 +344,35 @@ additional_input = html.Div([
                                                 placement='bottom'
                                                 )
                                     ]),
+                            dbc.Collapse(
+                                    dbc.Row([
+                                        html.Div('window size: ',
+                                                style={'padding-top': '2pt',
+                                                        'padding-left': '45pt',
+                                                        'padding-right': '0',
+                                                        'width': '120pt'
+                                                        }),
+                                        html.Div(
+                                                    dcc.Input(id='easy_linear_window_size', 
+                                                        value=ds.default_easy_linear_window_size, 
+                                                        debounce=False, 
+                                                        style={'padding': '0', 
+                                                                'margin-top': '1px', 
+                                                                'height': '30px', 
+                                                                'width': '100%', 
+                                                                'text-align': 'center'
+                                                                }
+                                                            ),
+                                                    style={'width': '45pt', 
+                                                            'padding-right':0}
+                                                )
+                                        ],
+                                        style={'padding-top': '5pt'}
+                                        ),
+                                             
+                                    is_open = False,
+                                    id='autofit_settings'
+                                    ),
                             
                             # hidden div that can be turned full screen to show progress of auto-fitting algorithm
                             html.Div([
@@ -1591,8 +1620,6 @@ def update_smoother_ws_tooltip(smoothing_ws, smoother_flag):
 )
 def smooth_data(n_clicks, df, smoother_flag, input_smoother_ws):
     alert_ws = ax.generate_alert(ms.error_smoother_ws)
-    print(input_smoother_ws)
-    print(int(input_smoother_ws))
     try:
         input_smoother_ws = int(input_smoother_ws)
     except:
@@ -1680,6 +1707,17 @@ def settings_div(n_clicks, is_open_state, style):
         return False, {'font-size': 25, 'color': 'dimgray'}
     else:
         return True, {'font-size': 25, 'color': 'darkslategray'}
+
+
+@app.callback(
+                Output('autofit_settings', 'is_open'),
+                Input('dropdown_fitting_algorithms', 'value'),
+)
+def autofitting_settings(fitting_algorithm):
+    if fitting_algorithm == 'Easy Linear':
+        return True
+    else:
+        return False
 
 
 @app.callback(

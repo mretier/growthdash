@@ -115,6 +115,8 @@ def generate_alert(alert_message):
 # generate fitted curve
 ################################################
 def generate_fitted_curve(t, fitting_algorithm, growth_data_sp, n_iter=1000):
+    t0 = growth_data_sp['t0']
+    t1 = growth_data_sp['t1']
     t0_idx = growth_data_sp['t0_idx']
     t1_idx = growth_data_sp['t1_idx']
     mu = growth_data_sp['mumax']
@@ -133,6 +135,9 @@ def generate_fitted_curve(t, fitting_algorithm, growth_data_sp, n_iter=1000):
     if fitting_algorithm in ['Manual', 'Manual-like']:
         t_fit_start = t[t0_idx]
         t_fit_end = t[t1_idx]
+    elif fitting_algorithm == 'Easy Linear':
+        t_fit_start = t0
+        t_fit_end = t1
     else:
         t_fit_start = t[0]
         t_fit_end = t[-1]
@@ -140,7 +145,7 @@ def generate_fitted_curve(t, fitting_algorithm, growth_data_sp, n_iter=1000):
     t_fit = np.linspace(t_fit_start, t_fit_end, n_iter)
 
     # create fit values (i.e. associated y-values)
-    if fitting_algorithm in ['Manual', 'Manual-like']:
+    if fitting_algorithm in ['Manual', 'Manual-like', 'Easy Linear']:
         
         y_fit = mf.exp_function(t_fit, n0, mu)
 
@@ -152,13 +157,13 @@ def generate_fitted_curve(t, fitting_algorithm, growth_data_sp, n_iter=1000):
         y_logistic_fit = mf.modified_logistic(t_fit, A, mu, l)
         y_fit = np.exp(y_logistic_fit) * n0
 
-    elif fitting_algorithm == 'Richards':
-        y_richards_fit = mf.modified_richards(t_fit, A, mu, l, v)
-        y_fit = np.exp(y_richards_fit) * n0
+    # elif fitting_algorithm == 'Richards':
+    #     y_richards_fit = mf.modified_richards(t_fit, A, mu, l, v)
+    #     y_fit = np.exp(y_richards_fit) * n0
     
-    elif fitting_algorithm == 'Schnute':
-        y_schnute_fit = mf.modified_schnute(t_fit, A, mu, l, v)
-        y_fit = np.exp(y_schnute_fit) * n0
+    # elif fitting_algorithm == 'Schnute':
+    #     y_schnute_fit = mf.modified_schnute(t_fit, A, mu, l, v)
+    #     y_fit = np.exp(y_schnute_fit) * n0
     return t_fit, y_fit
 
 
@@ -196,7 +201,12 @@ def generate_start_end_logphase_indicator_lines(fitting_algorithm, growth_data_s
 
         hovertext_start = ['start log-phase: {0:.2f} h'.format(t0) for x in range(n_iter)]
         hovertext_end = ['end log-phase: {0:.2f} h'.format(t1) for x in range(n_iter)]
-
+    
+    elif fitting_algorithm == 'Easy Linear':
+        y0 = mf.exp_function(t0, n0, mu)
+        y1 = mf.exp_function(t1, n0, mu)
+        hovertext_start = ['start log-phase: {0:.2f} h'.format(t0) for x in range(n_iter)]
+        hovertext_end = ['end log-phase: {0:.2f} h'.format(t1) for x in range(n_iter)]
     else:
         if 'Gompertz' in fitting_algorithm:
             y0 = np.exp(mf.modified_gompertz(t0, A, mu, l)) * n0

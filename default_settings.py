@@ -24,18 +24,33 @@ default_pop_size_measure = 'OD<sub>600</sub>'
 
 
 ################################################
+# data smoothing
+################################################
+default_smoothing_window_size = 10
+
+
+################################################
 # manual-like fitting algorithm
 ################################################
 auto_fit_default_ws = 10        # default rolling window size for auto fitting algorithm
 auto_fit_default_sr = 0.6       # default slope range for auto fitting algrorithm
 auto_fit_default_weight = 25    # default weight of optimiation algorithm
-default_smoothing_window_size = 10
 
+
+################################################
+# Easy Linear fitting algorithm
+################################################
+default_easy_linear_window_size = 5
 
 ################################################
 # available automatic fitting algorithms
 ################################################
-fittings_algorithms = ['Gompertz - tight', 'Gompertz - conventional', 'Logistic - tight', 'Logistic - conventional', ]  #'Manual-like', 'Schnute', 'Richards'
+fittings_algorithms = ['Gompertz - tight', 
+                       'Gompertz - conventional', 
+                       'Logistic - tight', 
+                       'Logistic - conventional', 
+                       'Easy Linear',
+                       ]  #'Manual-like', 'Schnute', 'Richards'
 default_fitting_algorithm = 'Gompertz - tight'
 
 
