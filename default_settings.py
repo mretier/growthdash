@@ -40,7 +40,7 @@ auto_fit_default_weight = 25    # default weight of optimiation algorithm
 ################################################
 # Easy Linear fitting algorithm
 ################################################
-default_easy_linear_window_size = 5
+default_easy_linear_window_size = 20
 
 ################################################
 # available automatic fitting algorithms
