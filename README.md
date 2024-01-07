@@ -1,12 +1,16 @@
 # Dashing Growth Curves
 Dashing Growth Curves is an open-source web app (http://dashing-growth-curves.ethz.ch/) for the analysis of microbial growth curves.
 ## Latest release notes
-2022-12-15 first release
+- 2024-01-07 update:
+    - added overview plot of all samples to facilitate data exploration
+    - added Easy Linear algorithm to options for automated data analysis
+    - upgraded to Python 3.12 for improved performance
+- 2022-12-15 first release
 ## How to cite
 If you found Dashing Growth Curves useful for your work please cite the the most current associated publication: https://www.biorxiv.org/content/10.1101/2022.12.16.520708v1
 ## Questions and Bug reports
 Please refer to the issues section and feel free to ask a question.
-I can also be found on Twitter @mRetier or Mastodon @mreiter@ecoevo.social
+I can also be found on X @mRetier
 ## Local installation
 Local installation requires basic conding knowledge.
 1. Install Git
