@@ -18,6 +18,11 @@ You should have received a copy of the GNU General Public License along with Foo
 app_name = 'Dashing Growth Curves'
 
 ################################################
+# accepted names for blank samples
+################################################
+accepted_blank_names = ['Blanks', 'Blank', 'blanks', 'blank']
+
+################################################
 # default population density measure
 ################################################
 default_pop_size_measure = 'OD<sub>600</sub>'

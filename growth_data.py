@@ -27,6 +27,7 @@ import auto_fitting
 
 import math_functions as mf
 import auxilliary_functions as ax
+import default_settings as ds
 
 
 
@@ -414,7 +415,7 @@ def register_gd_callbacks(app):
         else:
             df = pd.DataFrame.from_dict(df_smoothed, orient='tight')
 
-        skip_list = ['Blanks', 'Blank', 'blanks', 'blank']
+        skip_list = ds.accepted_blank_names
         n_samples_total = len(growth_rate_data)
         for i, sp in enumerate(growth_rate_data):
             set_progress((str(i + 1), str(n_samples_total), '{} / {}'.format(i + 1, n_samples_total)))

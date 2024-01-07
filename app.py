@@ -29,6 +29,8 @@ from PIL import Image
 import re
 
 import plotly.graph_objects as go
+from plotly.express.colors import sample_colorscale
+from plotly.subplots import make_subplots
 import plotting as pl
 
 import math_functions as mf
@@ -558,7 +560,7 @@ settings_div = [
                                 )
                         ])               
                     ]
-aaa
+
 
 # div showing results for individual samples
 results_growth = [
@@ -570,6 +572,10 @@ results_growth = [
                     dbc.Row(id = 'yield', children = dcc.Markdown('yield \[{}\] ='.format(ds.default_pop_size_measure), dangerously_allow_html=True)),
                     dbc.Row(id = 'error', children= dcc.Markdown('RMSE = '))
                     ]
+
+
+# overview graphs
+overview_graph = dcc.Graph(id='fig_overview', config=ax.graph_config('overview'), style={'height': '30em'})
 
 
 # sample graphs
@@ -590,15 +596,21 @@ yield_graph = dcc.Graph(id='fig_yield', config=ax.graph_config('yield'))
 
 # download buttons
 download_buttons = [
-                    html.Hr(style={'margin-top': '40px', 
-                                    'margin-bottom': '40px'
-                                    }
-                            ),
-                    html.H2('Download data:', 
-                            style={'margin-bottom': '20px'}
-                            ),
+                    # html.Hr(style={'margin-top': '40px', 
+                    #                 'margin-bottom': '40px'
+                    #                 }
+                    #         ),
+                    html.Div(dcc.Markdown('<b>Downloads</b>', style={'font-size': '35pt'}, dangerously_allow_html=True)),
                     html.H6('Interactive .html plots '),
                     dbc.Row([
+                            dbc.Col([dcc.Loading(html.A(
+                                    id="overview_download",
+                                    href="",
+                                    children=[ax.create_download_button('data overview times')],
+                                    target="_blank",
+                                    download="overview.html"))], 
+                                    width=1,
+                                    ),
                             dbc.Col([dcc.Loading(html.A(
                                     id="dt_download",
                                     href="",
@@ -674,6 +686,35 @@ download_buttons = [
 ###########
 # data display layout
 sample_data_div = dbc.Collapse([
+        html.Div(dcc.Markdown('<b>Data Overview</b>', style={'font-size': '35pt'}, dangerously_allow_html=True)),
+        # collapsible div containing overview graphs
+        dbc.Row([
+                
+                html.I(
+                    id='show_hide_overview_graphs_button', 
+                    className='bi bi-caret-down-fill', 
+                    style={
+                        'color': 'darkslategray', 
+                        'margin-left':'10px',
+                            },
+                        ),
+                dbc.Collapse(
+                    [
+                    html.Div([overview_graph]),
+                    html.Div([
+                        html.I(
+                            id='overview_subtract_blanks_button'
+                        )
+                    ])
+                    ], 
+                    id = 'overview_graphs_div',
+                    is_open=True,
+                )
+        ]),
+
+        # separator
+        # html.Hr(style={'margin-top': '30px', 'margin-bottom': '20px', 'border': '3.5px solid'}),
+        html.Div(dcc.Markdown('<b>Data Analysis</b>', style={'font-size': '35pt'}, dangerously_allow_html=True)),
         dbc.Row([
                 # top row containing settings button and buttons to switch between samples
                 dbc.Row([
@@ -761,12 +802,14 @@ sample_data_div = dbc.Collapse([
                         html.Div(id='message_area_data_smoother'),
                         ]),
 
-                html.Hr(style={'margin-top': '20px', 'margin-bottom': '30px', 'border': '1.5px solid'}),
                 ],
                 style = {'background-color': 'rgb(245, 245, 245)'},
                 id = 'top-row',
                 ),
         
+        # separator
+        html.Hr(style={'margin-top': '20px', 'margin-bottom': '30px', 'border': '1.5px solid'}),
+
         # input areas for sample name, associated blanks and additional features
         dbc.Row([
                 dbc.Col([sample_name_input], 
@@ -782,6 +825,7 @@ sample_data_div = dbc.Collapse([
                         )
                 ]),
         
+        # separator
         html.Hr(style={'margin-top': '30px', 'margin-bottom': '20px', 'border': '1.5px solid'}),
         
         dbc.Row([
@@ -864,9 +908,8 @@ app.layout = html.Div(
 )
 def load_data_page(contents, filename, upload_flag):
     # handle and format uploaded data
-    print('xxxx')
     if contents is None:
-        return dash.no_update, dash.no_update, dash.no_update, None, None
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, None, None
 
     else:
         # load data
@@ -1154,6 +1197,115 @@ def update_blanks(new_blanks, input_default_blanks, sample_idx, upload_flag, sam
             return new_blanks, blank_locs, input_default_blanks, '', input_default_blanks
 
 
+
+@app.callback(
+                Output('fig_overview', 'figure'),
+                Input('store_sample_names', 'data'),
+                Input('store_smoother_flag', 'data'),
+                Input('store_blank_locs', 'data'),
+                Input('store_upload_flag', 'data'),
+                Input('store_default_popsizemeasure', 'data'),
+                State('store_data_df', 'data'),
+                State('store_data_df_smoothed', 'data'),
+                prevent_initial_call=True,
+)
+def show_overview(sample_names, smoother_flag, blank_locs, upload_flag, pop_size_measure, df, df_smoothed):
+    if df is None:
+        return dash.no_update
+    
+    # reconstruct pandas df from store
+    if smoother_flag == False:
+        df = pd.DataFrame.from_dict(df, orient='tight')
+    else:
+        df = pd.DataFrame.from_dict(df_smoothed, orient='tight')
+    if dash.callback_context.triggered[0]['prop_id'] != 'store_upload_flag.data':
+        df.index = sample_names
+
+    if dash.callback_context.triggered[0]['prop_id'] != 'store_upload_flag.data':
+        df.index = sample_names
+        
+    ##########
+    # overview graph
+    ##########
+    def error_band(mean, std):
+        x_error_pos = mean.index.to_list() + mean.index.to_list()[::-1]
+        y_error_pos = (mean + std).to_list() + (mean - std).to_list()[::-1]
+        return x_error_pos, y_error_pos
+
+    # sample names
+    names = df.index.str.extract(r'^(.*?)(?=_\d+$|\s\d+$|$)')
+    names = names[0].str.strip().unique()
+    t = df.columns.tolist()
+
+    fig_overview = make_subplots(rows=1, cols=2, subplot_titles=('<b>Individual</b>', '<b>Grouped<b>'))
+
+    # trace colors
+    trace_colors = sample_colorscale('icefire', np.linspace(0.1, 0.9, len(names)))
+
+    for j, n in enumerate(names):
+        df_n = df.loc[df.index.str.contains(n)]
+        df_n_mean = df_n.mean(axis=0)
+        df_n_std = df_n.std(axis=0)
+
+
+        # trace color
+        
+        if n in ds.accepted_blank_names:
+            # blanks
+            trace_color = 'darkgrey'
+        else:
+            # samples
+            trace_color = trace_colors[j]
+
+
+        # add individual traces
+        for i in range(df_n.shape[0]):
+            fig_overview.add_trace(go.Scatter(x=t, y=df_n.iloc[i, :], name=df_n.index[i], line_color=trace_color, showlegend=False, legendgroup=n), row=1, col=1)
+
+        # add error band
+        errors_x, errors_y = error_band(df_n_mean, df_n_std)
+        fig_overview.add_trace(
+            go.Scatter(
+                x=errors_x, y=errors_y, 
+                fill='toself', 
+                line_color=trace_color,
+                line_width=0,
+                showlegend=False,
+                legendgroup=n,
+                name=n,
+                ), 
+            row=1, col=2)
+    
+        # add mean trace
+        fig_overview.add_trace(go.Scatter(x=t, y=df_n_mean, name=n, line_color=trace_color, legendgroup=n), row=1, col=2)
+
+    fig_overview.update_layout(
+        font_size = 16,
+        font_color = 'black',
+        font_family = 'Open Sans',
+        legend_x = 0.5,
+        legend_xanchor = 'center',
+
+        xaxis_domain = [0, 0.40],
+        xaxis2_domain = [0.60, 1],
+
+        xaxis_title = 'time [h]',
+        xaxis2_title = 'time [h]',
+
+        yaxis_title = pop_size_measure,
+        yaxis2_title = pop_size_measure,
+
+        paper_bgcolor='rgba(0,0,0,0)',
+        )
+
+    fig_overview.update_annotations(
+        yshift = 20,
+        font_size = 20,
+    )
+    return fig_overview
+
+
+
 @app.callback(
                 Output('fig_blanks', 'figure'),
                 Output('fig_sample', 'figure'),
@@ -1198,7 +1350,7 @@ def show_data(sample_idx, blank_locs, upload_flag, sample_names, growth_data, sm
     # sample name
     current_sample_name = sample_names[sample_idx]
 
-
+    
 
     ##########
     # blanks graph
@@ -1695,6 +1847,20 @@ def smooth_data(n_clicks, df, smoother_flag, input_smoother_ws):
 # layout callbacks
 ##################
 @app.callback(
+                Output('overview_graphs_div', 'is_open'),
+                Output('show_hide_overview_graphs_button', 'className'),
+                Input('show_hide_overview_graphs_button', 'n_clicks'),
+                State('overview_graphs_div', 'is_open'),
+                prevent_initial_call = True
+)
+def settings_div(n_clicks, is_open_state):
+    # open settings div on button click
+    if is_open_state == True:
+        return False, 'bi bi-caret-right'
+    else:
+        return True, 'bi bi-caret-down-fill'
+
+@app.callback(
                 Output('settings_div', 'is_open'),
                 Output('settings_button', 'style'),
                 Input('settings_button', 'n_clicks'),
@@ -1751,12 +1917,14 @@ def encode_plot_for_download(fig):
     return href
 
 @app.callback(
+              Output('overview_download', 'href'),
               Output('dt_download', 'href'),
               Output('mu_download', 'href'),
               Output('lt_download', 'href'),
               Output('doublings_download', 'href'),
               Output('doublings_log_download', 'href'),
               Output('yields_download', 'href'),
+              Input('fig_overview', 'figure'),
               Input('fig_dt', 'figure'),
               Input('fig_mu', 'figure'),
               Input('fig_lt', 'figure'),
@@ -1765,15 +1933,16 @@ def encode_plot_for_download(fig):
               Input('fig_yield', 'figure'),
               prevent_initial_call = True
               )
-def make_image(fig_dt, fig_mu, fig_lt, fig_doublings, fig_doublings_log, fig_yields):
+def make_image(fig_overview, fig_dt, fig_mu, fig_lt, fig_doublings, fig_doublings_log, fig_yields):
     # summary plot download as .html files
+    href_overview = encode_plot_for_download(fig_overview)
     href_dt = encode_plot_for_download(fig_dt)
     href_mu = encode_plot_for_download(fig_mu)
     href_lt = encode_plot_for_download(fig_lt)
     href_doublings = encode_plot_for_download(fig_doublings)
     href_doublings_log = encode_plot_for_download(fig_doublings_log)
     href_yields = encode_plot_for_download(fig_yields)
-    return href_dt, href_mu, href_lt, href_doublings, href_doublings_log, href_yields
+    return href_overview, href_dt, href_mu, href_lt, href_doublings, href_doublings_log, href_yields
 
 
 @app.callback(

@@ -13,6 +13,79 @@ You should have received a copy of the GNU General Public License along with Das
 import plotly.graph_objects as go
 
 
+def overview_plot(df):
+    def error_band(mean, std):
+        # compute error band around mean of group of replicate samples
+        x_error_pos = mean.index.to_list() + mean.index.to_list()[::-1]
+        y_error_pos = (mean + std).to_list() + (mean - std).to_list()[::-1]
+
+        return x_error_pos, y_error_pos
+
+
+
+    names = df.index.str.extract(r'^(.*?)(?=_\d+$|\s\d+$|$)')
+    names = names[0].str.strip().unique()
+    t = df.columns.tolist()
+
+    fig_overview = make_subplots(rows=1, cols=2, subplot_titles=('Individual', 'Grouped'))
+
+    # trace colors
+    trace_colors = sample_colorscale('icefire', np.linspace(0.1, 0.9, len(names)))
+
+    for j, n in enumerate(names):
+        df_n = df.loc[df.index.str.contains(n)]
+        df_n_mean = df_n.mean(axis=0)
+        df_n_std = df_n.std(axis=0)
+
+
+        # trace color
+        if n in ds.accepted_blank_names:
+            # blanks
+            trace_color = 'darkgrey'
+        else:
+            # samples
+            trace_color = trace_colors[j]
+
+
+        # add individual traces
+        for i in range(df_n.shape[0]):
+            fig_overview.add_trace(go.Scatter(x=t, y=df_n.iloc[i, :], name=df_n.index[i], line_color=trace_color, showlegend=False, legendgroup=n), row=1, col=1)
+
+        # add error band
+        errors_x, errors_y = error_band(df_n_mean, df_n_std)
+        fig_overview.add_trace(
+            go.Scatter(
+                x=errors_x, y=errors_y, 
+                fill='toself', 
+                line_color=trace_color,
+                line_width=0,
+                showlegend=False,
+                legendgroup=n,
+                name=n,
+                ), 
+            row=1, col=2)
+        
+        # add mean trace
+        fig_overview.add_trace(go.Scatter(x=t, y=df_n_mean, name=n, line_color=trace_color, legendgroup=n), row=1, col=2)
+
+
+    fig_overview.update_layout(
+        font_size = 16,
+        font_color = 'black',
+        font_family = 'Open Sans',
+        legend_x = 0.5,
+        legend_xanchor = 'center',
+
+        xaxis_domain = [0, 0.40],
+        xaxis2_domain = [0.60, 1],
+        )
+
+    fig_overview.update_annotations(
+        yshift = 20,
+        font_size = 20,
+    )
+
+    return fig_overview
 
 def bar_chart(names, y, errors, n_ex, y_axis='y', dp_overlay=None, ):
 
