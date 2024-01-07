@@ -1296,6 +1296,7 @@ def show_overview(sample_names, smoother_flag, blank_locs, upload_flag, pop_size
         yaxis2_title = pop_size_measure,
 
         paper_bgcolor='rgba(0,0,0,0)',
+        modebar =  {'bgcolor':'rgba(0,0,0,0)', 'color':'darkslategrey', "activecolor":'black'},
         )
 
     fig_overview.update_annotations(
@@ -1381,6 +1382,7 @@ def show_data(sample_idx, blank_locs, upload_flag, sample_names, growth_data, sm
                             paper_bgcolor='rgba(0,0,0,0)',
                             margin={'l': 120, 'r': 0, 't': 0, 'b': 20},
                             annotations=annotations_blank,
+                            modebar =  {'bgcolor':'rgba(0,0,0,0)', 'color':'darkslategrey', "activecolor":'black'},
                             )
 
     fig_blanks = go.Figure(data=data_blanks, layout=layout_blanks)
@@ -1413,6 +1415,7 @@ def show_data(sample_idx, blank_locs, upload_flag, sample_names, growth_data, sm
                             paper_bgcolor='rgba(0,0,0,0)',
                             margin={'l': 120, 'r': 0, 't': 0, 'b': 20},
                             annotations=annotations_sample,
+                            modebar =  {'bgcolor':'rgba(0,0,0,0)', 'color':'darkslategrey', "activecolor":'black'},
                             )
     fig_sample = go.Figure(data=data_sample, layout=layout_sample)
     
@@ -1473,8 +1476,8 @@ def show_data(sample_idx, blank_locs, upload_flag, sample_names, growth_data, sm
                             font={'size': 16},
                             paper_bgcolor='rgba(0,0,0,0)',
                             margin={'l': 120, 'r': 0, 't': 0, 'b': 20},
-                            annotations=annotations_blanked
-
+                            annotations=annotations_blanked,
+                            modebar =  {'bgcolor':'rgba(0,0,0,0)', 'color':'darkslategrey', "activecolor":'black'},
                             )
     fig_blanked = go.Figure(data=data_blanked, layout=layout_blanked)
 
@@ -1528,16 +1531,18 @@ def show_data(sample_idx, blank_locs, upload_flag, sample_names, growth_data, sm
     else:
         y_log_lb = -3
         y_log_ub = 1
-    log_annotations = [{'showarrow':False, 
-                        'xref':'paper', 'x':0, 
-                        'yref':'paper', 'y':1.1, 
-                        'text':'<i>Select exponential growth phase here</i>'
-                        },
-                        {'showarrow':False, 
-                        'xref':'paper', 'x': -0.175, 
-                        'yref':'paper', 'y': -0.175, 
-                        'text':'time [h]'
-                        }
+    log_annotations = [
+
+                    {'showarrow':False, 
+                    'xref':'paper', 'x':0, 
+                    'yref':'paper', 'y':1.1, 
+                    'text':'<i>Select exponential growth phase here</i>'
+                    },
+                    {'showarrow':False, 
+                    'xref':'paper', 'x': -0.175, 
+                    'yref':'paper', 'y': -0.175, 
+                    'text':'time [h]'
+                    }
                         ]
     layout_log = go.Layout(
                             showlegend=False,
@@ -1559,6 +1564,7 @@ def show_data(sample_idx, blank_locs, upload_flag, sample_names, growth_data, sm
                             dragmode='select',
                             margin={'t':40, 'b': 60, 'l': 100},
                             annotations=log_annotations,
+                            modebar =  {'bgcolor':'rgba(0,0,0,0)', 'color':'darkslategrey', "activecolor":'black'},
                             )
     fig_log = go.Figure(data=data_log, layout=layout_log)
     
