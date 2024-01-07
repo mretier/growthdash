@@ -558,7 +558,7 @@ settings_div = [
                                 )
                         ])               
                     ]
-
+aaa
 
 # div showing results for individual samples
 results_growth = [
@@ -864,6 +864,7 @@ app.layout = html.Div(
 )
 def load_data_page(contents, filename, upload_flag):
     # handle and format uploaded data
+    print('xxxx')
     if contents is None:
         return dash.no_update, dash.no_update, dash.no_update, None, None
 
