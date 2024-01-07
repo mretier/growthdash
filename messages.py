@@ -56,7 +56,7 @@ error_manual_like_fit_w = 'Weight needs to be an float value'
 intro_text = dcc.Markdown('''
                 Use {} to quickly extract growth parameters (e.g. max. growth rate, lag time, etc.)\
                     from growth curves for hundreds of samples.<br>
-                Growth curves can be fit by conventional manual selection of the linear growth phase in a\
+                Growth curves can be fitted by conventional manual selection of the linear growth phase in a\
                     log plot or automatically by different statistical growth models.
              '''.format(ds.app_name),
              dangerously_allow_html=True)
@@ -68,6 +68,6 @@ upload_area = dcc.Markdown(
                                                                     
 
 data_privacy_text = dcc.Markdown('''
-    No data is stored on the server. {0} is open source. For sensitive data {0} can be installed [locally](https://github.com/Dahlai/growthdash)
+    No data is stored on the server. {0} is open-source. {0} can also be installed [locally](https://github.com/Dahlai/growthdash).
                     '''.format(ds.app_name)
                     )
