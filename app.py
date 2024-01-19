@@ -930,7 +930,6 @@ def load_data_page(contents, filename, upload_flag):
             df.columns[1:].astype(float)
         except:
             upload_alert = ax.generate_alert(ms.error_upload_duplicate_t_non_float)
-            print('xxx')
             return dash.no_update, dash.no_update, dash.no_update, upload_alert, None, None
 
         # format uploaded data
@@ -1244,12 +1243,15 @@ def show_overview(sample_names, smoother_flag, blank_locs, upload_flag, pop_size
 
     for j, n in enumerate(names):
         df_n = df.loc[df.index.str.contains(n)]
-        df_n_mean = df_n.mean(axis=0)
-        df_n_std = df_n.std(axis=0)
 
+        df_n = df_n.loc[:, df_n.isna().sum(axis=0) != df_n.shape[0]] # drop timepoints where there are only NaNs
+
+        df_n_mean = df_n.mean(axis=0)  # pandas .mean() ignores NaN values
+        df_n_std = df_n.std(axis=0)    # pandas .std() ignores NaN values
+        df_n_mean = pd.Series(np.nanmean(df_n.values.astype(float), axis=0).T, index=df_n.columns)
+        df_n_std = pd.Series(np.nanstd(df_n.values.astype(float), axis=0), index=df_n.columns)
 
         # trace color
-        
         if n in ds.accepted_blank_names:
             # blanks
             trace_color = 'darkgrey'
@@ -1260,10 +1262,13 @@ def show_overview(sample_names, smoother_flag, blank_locs, upload_flag, pop_size
 
         # add individual traces
         for i in range(df_n.shape[0]):
-            fig_overview.add_trace(go.Scatter(x=t, y=df_n.iloc[i, :], name=df_n.index[i], line_color=trace_color, showlegend=False, legendgroup=n), row=1, col=1)
+            df_n_i = df_n.iloc[i, :].dropna()  # drop nan values
+            t_i = df_n_i.index
+            fig_overview.add_trace(go.Scatter(x=t_i, y=df_n_i, name=df_n.index[i], line_color=trace_color, showlegend=False, legendgroup=n), row=1, col=1)
 
         # add error band
         errors_x, errors_y = error_band(df_n_mean, df_n_std)
+
         fig_overview.add_trace(
             go.Scatter(
                 x=errors_x, y=errors_y, 
@@ -1277,7 +1282,8 @@ def show_overview(sample_names, smoother_flag, blank_locs, upload_flag, pop_size
             row=1, col=2)
     
         # add mean trace
-        fig_overview.add_trace(go.Scatter(x=t, y=df_n_mean, name=n, line_color=trace_color, legendgroup=n), row=1, col=2)
+
+        fig_overview.add_trace(go.Scatter(x=df_n_mean.index, y=df_n_mean, name=n, line_color=trace_color, legendgroup=n), row=1, col=2)
 
     fig_overview.update_layout(
         font_size = 16,
@@ -1342,8 +1348,13 @@ def show_data(sample_idx, blank_locs, upload_flag, sample_names, growth_data, sm
     if dash.callback_context.triggered[0]['prop_id'] != 'store_upload_flag.data':
         df.index = sample_names
 
-    # time points
-    t = df.columns.tolist()
+    # data for trace
+    sample_trace_0 = df.iloc[sample_idx]
+    nan_mask = ~sample_trace_0.isna()
+    sample_trace = sample_trace_0.dropna()  # drop nan values
+    t = sample_trace.index.values # timepoints, i.e. x-values
+    sample_trace = sample_trace.values # population sizes, i.e. y-values
+
 
     # sample position
     current_sample_position = sample_locations[sample_idx]
@@ -1392,8 +1403,8 @@ def show_data(sample_idx, blank_locs, upload_flag, sample_names, growth_data, sm
     # sample graph
     ##########
     # display the trace of the currently selected sample
-    sample_trace = df.iloc[sample_idx]
-    data_sample = [go.Scatter(x=t, y=df.iloc[sample_idx], line={'color':'rgb(44, 105, 154)', 'width':3})]
+
+    data_sample = [go.Scatter(x=t, y=sample_trace, line={'color':'rgb(44, 105, 154)', 'width':3})]
     annotations_sample = [{'text': '<b>Raw</b>', 'font_size': 22, 'textangle': -90, 'align':'center',
                           'showarrow': False,
                           'x': -0.4, 'xref': 'paper', 'xanchor': 'center', 
@@ -1424,18 +1435,27 @@ def show_data(sample_idx, blank_locs, upload_flag, sample_names, growth_data, sm
     # sample blanked graph
     ##########
     # display the trace of the currently selected blanked sample
-    sample_trace = df.iloc[sample_idx]
-    sample_trace_blanked = sample_trace - blanks_mean
+
+
+    # blanking:
+    # subtract mean blank values from sample trace
+    # only keep values where both sample and blank are defined, i.e. not NaN
+    # here removed NaN values in blank measurements and also in sample_trace
+    nan_mask_blanks = ~blanks_mean.isna()
+
+    t_blanked = sample_trace_0.index.values[nan_mask & nan_mask_blanks]
+    sample_trace_blanked = sample_trace_0[nan_mask & nan_mask_blanks] - blanks_mean[nan_mask & nan_mask_blanks] 
+
     sample_name = growth_data[current_sample_position]['sample_name']
 
-    data_blanked = [go.Scatter(x=t, y=sample_trace_blanked, line={'color':'rgb(44, 105, 154)', 'width':3}, name=sample_name)]
+    data_blanked = [go.Scatter(x=t_blanked, y=sample_trace_blanked, line={'color':'rgb(44, 105, 154)', 'width':3}, name=sample_name)]
 
     # add fitted trace, if computed
     fitting_algorithm = growth_data[current_sample_position]['fitting_mode']
     
     if (fitting_algorithm != 'NaN') and (growth_data[current_sample_position]['mumax'] != 'NaN'):
         # fitted trace
-        t_fit, y_fit = ax.generate_fitted_curve(t, fitting_algorithm, growth_data[current_sample_position])
+        t_fit, y_fit = ax.generate_fitted_curve(t_blanked, fitting_algorithm, growth_data[current_sample_position])
 
         # add start/end of log-phase overlay to plot
         x_0, y_0, x_1, y_1, hovertext_start, hovertext_end = ax.generate_start_end_logphase_indicator_lines(fitting_algorithm, growth_data[current_sample_position], sample_trace_blanked)

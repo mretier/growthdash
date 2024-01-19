@@ -212,16 +212,29 @@ def register_gd_callbacks(app):
             sp = sample_locations[sample_idx]
             
 
-            # time points
-            t = df.columns.tolist()
-
-            # blanks
             blanks = blank_locs[sp]
             blanks_mean = df.loc[blanks].mean(axis=0)
 
+            sample_trace_0 = df.iloc[sample_idx]
+            sample_trace = sample_trace_0.values
+
+            nan_mask = ~np.isnan(sample_trace)
+            nan_mask_blanks = ~np.isnan(blanks_mean)
+                
+            t_blanked = sample_trace_0.index.values[nan_mask & nan_mask_blanks]
+            sample_trace_blanked = sample_trace[nan_mask & nan_mask_blanks] - blanks_mean[nan_mask & nan_mask_blanks] 
+
+
+            # time points
+            t = df.columns.tolist()
+
+            # # blanks
+            # blanks = blank_locs[sp]
+            # blanks_mean = df.loc[blanks].mean(axis=0)
+
             # sample trace
-            sample_trace = df.iloc[sample_idx]
-            sample_trace_blanked = sample_trace - blanks_mean
+            # sample_trace = df.iloc[sample_idx]
+            # sample_trace_blanked = sample_trace - blanks_mean
 
             # selection idx
             t0 = selected_data['range']['x'][0]
@@ -235,7 +248,7 @@ def register_gd_callbacks(app):
 
 
             # fit exponential curve
-            x = t[t0_idx: t1_idx + 1]
+            x = t_blanked[t0_idx: t1_idx + 1]
             y = sample_trace_blanked.iloc[t0_idx: t1_idx + 1]
             popt_exp, pcov_exp = curve_fit(mf.exp_function, x, y, bounds=([0, 0], [5, np.inf]))
 
@@ -253,8 +266,8 @@ def register_gd_callbacks(app):
             fitting_mode = 'Manual'
 
             growth_rate_data[sp] = add_to_growth_data_dict(growth_rate_data[sp], 
-                                                            t[t0_idx], 0, t0_idx, 
-                                                            t[t1_idx], 0, t1_idx,
+                                                            t_blanked[t0_idx], 0, t0_idx, 
+                                                            t_blanked[t1_idx], 0, t1_idx,
                                                             mu_u.n, mu_u.std_dev,
                                                             doublings_log, doublings_log_std,
                                                             dt_u.n, dt_u.std_dev,
@@ -426,14 +439,24 @@ def register_gd_callbacks(app):
             else:
                 blanks = blank_locs[sp]
                 blanks_mean = df.loc[blanks].mean(axis=0)
-                sample_trace_blanked = df.iloc[i] - blanks_mean
-                t = df.columns.values
+
+                sample_trace_0 = df.iloc[i]
+                sample_trace = sample_trace_0.values
+
+                nan_mask = ~np.isnan(sample_trace)
+                nan_mask_blanks = ~np.isnan(blanks_mean)
+                
+                t_blanked = sample_trace_0.index.values[nan_mask & nan_mask_blanks]
+                sample_trace_blanked = sample_trace[nan_mask & nan_mask_blanks] - blanks_mean[nan_mask & nan_mask_blanks] 
+
+                
+        
                 
                 # remove negative and zero value (taking the log negative values become NaN, fitting algorithms can't handle NaNs and infinities)
                 sample_trace_blanked_log = np.log(sample_trace_blanked)
                 nan_inf_mask = (~np.isnan(sample_trace_blanked_log)) & (sample_trace_blanked_log != - np.inf)
                 sample_trace_blanked = sample_trace_blanked[nan_inf_mask]
-                t = t[nan_inf_mask]
+                t_blanked = t_blanked[nan_inf_mask]
                 
                 if sample_trace_blanked.shape[0] <= 0.1 * sample_trace_blanked_log.shape[0]:
                     # don't analyzed samples that contain majority negative values after blanking
@@ -441,13 +464,13 @@ def register_gd_callbacks(app):
 
                 # fitting
                 if fitting_algorithm == 'Manual-like':
-                    t0_idx, t1_idx = auto_fitting.autofit_manual_like(t, sample_trace_blanked, ws=auto_fit_ws, slope_range=auto_fit_sr, b=auto_fit_weight)
+                    t0_idx, t1_idx = auto_fitting.autofit_manual_like(t_blanked, sample_trace_blanked, ws=auto_fit_ws, slope_range=auto_fit_sr, b=auto_fit_weight)
 
                     if t0_idx is None:
                         continue
 
                     try:
-                        x = t[t0_idx: t1_idx]
+                        x = t_blanked[t0_idx: t1_idx]
                         y = sample_trace_blanked.iloc[t0_idx: t1_idx]
                         popt_exp, pcov_exp = curve_fit(mf.exp_function, x, y, bounds=([0, 0.001], [5, 2]))
                         
@@ -469,8 +492,8 @@ def register_gd_callbacks(app):
                     fitting_mode = 'Manual-like'
 
                     growth_rate_data[sp] = add_to_growth_data_dict(growth_rate_data[sp], 
-                                                t[t0_idx], 0, t0_idx, 
-                                                t[t1_idx], 0, t1_idx,
+                                                t_blanked[t0_idx], 0, t0_idx, 
+                                                t_blanked[t1_idx], 0, t1_idx,
                                                 mu_u.n, mu_u.std_dev,
                                                 doublings_log, doublings_log_std,
                                                 dt_u.n, dt_u.std_dev,
@@ -488,7 +511,7 @@ def register_gd_callbacks(app):
                         # mu: max growth rate
                         # l: lag time (i.e. beginning of exponential phase)
                         # t1: beginning of stationary phase (i.e. end of exponential phase)
-                        A, A_std, mu, mu_std, l, l_std, n0 = auto_fitting.autofit_gompertz(t, sample_trace_blanked)
+                        A, A_std, mu, mu_std, l, l_std, n0 = auto_fitting.autofit_gompertz(t_blanked, sample_trace_blanked)
 
 
                         if (np.isnan(A)) or (np.isnan(mu_std)) or (mu_std == np.inf):
@@ -513,7 +536,7 @@ def register_gd_callbacks(app):
                         # mu: max growth rate
                         # l: lag time (i.e. beginning of exponential phase)
                         # t1: beginning of stationary phase (i.e. end of exponential phase)
-                        A, A_std, mu, mu_std, l, l_std, n0 = auto_fitting.autofit_logistic(t, sample_trace_blanked)
+                        A, A_std, mu, mu_std, l, l_std, n0 = auto_fitting.autofit_logistic(t_blanked, sample_trace_blanked)
 
                         if (np.isnan(A)) or (np.isnan(mu_std)) or (mu_std == np.inf):
                             continue  
@@ -535,7 +558,7 @@ def register_gd_callbacks(app):
                         # mu: max growth rate
                         # l: lag time (i.e. beginning of exponential phase)
                         # t1: beginning of stationary phase (i.e. end of exponential phase)
-                        t0, t1, mu, mu_std, y_intercept, y_intercept_std, R2_error = auto_fitting.autofit_easylinear(t, sample_trace_blanked, window_size)
+                        t0, t1, mu, mu_std, y_intercept, y_intercept_std, R2_error = auto_fitting.autofit_easylinear(t_blanked, sample_trace_blanked, window_size)
                         
                         A_u = uc.ufloat(np.nan, np.nan)
                         # n0 = mf.lin_function(t0, mu, y_intercept) / np.exp(mf.lin_function(t0, mu, y_intercept))
@@ -574,7 +597,7 @@ def register_gd_callbacks(app):
                                                 fitting_mode=fitting_algorithm,
                                                 smoothing_window=smoother_ws
                                                 )
-                    t_fit, y_fit = ax.generate_fitted_curve(t, fitting_algorithm, growth_rate_data[sp], t.shape[0])
+                    t_fit, y_fit = ax.generate_fitted_curve(t_blanked, fitting_algorithm, growth_rate_data[sp], t_blanked.shape[0])
                     
                     if 'Easy Linear' in fitting_algorithm:
                         growth_rate_data[sp]['error'] = R2_error
