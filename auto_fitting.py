@@ -125,83 +125,110 @@ def autofit_easylinear(x, y, ws):
 
 
 def autofit_gompertz(x, y):
-    # fit a Gompertz growth sigmoid curve to the whole dataset
-  
-    n0 = np.min([y_i for y_i in y if y_i > 0]) # center around minimum measured OD value
-    y_log = np.log(np.array(y) / n0)
+    # fit a Gompertz growth sigmoid curve to the growth curve
+    y_log = np.log(np.array(y))
     
+    # estimate initial parameters for fitting
+    N0_estimate = np.min([y_i for y_i in y if y_i > 0])
+    A_estimate = np.max(y_log - np.log(N0_estimate))
+    mu_estimate = 0.2
+    
+    mid_ylog_val = (np.max(y_log) + np.min(y_log)) / 2
+    closest_ylog_point_idx = np.argmin(np.power(mid_ylog_val - y_log, 2))
+    l_estimate = x[closest_ylog_point_idx]
+
     try:
-        popt, pcov = curve_fit(mf.modified_gompertz, x, y_log, p0=[0.1, 0.5, -5], bounds=[[0, 0, -np.inf], [np.inf, np.inf, np.inf]])
-        A = popt[0]
-        A_std = np.sqrt(pcov[0, 0])
-        mu = popt[1]
-        mu_std = np.sqrt(pcov[1, 1])
-        l = popt[2]
-        l_std = np.sqrt(pcov[2, 2])
-        return A, A_std, mu, mu_std, l, l_std, n0
+        popt, pcov = curve_fit(mf.modified_gompertz, x, y_log, 
+                               p0=[N0_estimate, A_estimate, mu_estimate, l_estimate], 
+                               bounds=[[-np.inf, 0, 0, -np.inf], [np.inf, np.inf, np.inf, np.inf]],
+                               maxfev=100000000,
+                               )
+        N0 = popt[0]
+        N0_std = np.sqrt(pcov[0, 0])
+        A = popt[1]
+        A_std = np.sqrt(pcov[1, 1])
+        mu = popt[2]
+        mu_std = np.sqrt(pcov[2, 2])
+        l = popt[3]
+        l_std = np.sqrt(pcov[3, 3])
+        return A, A_std, mu, mu_std, l, l_std, N0, N0_std
     except:
-        return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
+        return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
 
 
 def autofit_logistic(x, y):
-    # fit a logistic growth sigmoid curve to the whole dataset
-    n0 = np.min([y_i for y_i in y if y_i > 0]) # center around minimum measured OD value
-    y_log = np.log(np.array(y) / n0)
+    # fit a Logistic growth sigmoid curve to the growth curve
+    y_log = np.log(np.array(y))
     
-    try:
-        popt, pcov = curve_fit(mf.modified_logistic, x, y_log, p0=[0.1, 0.1, 1], bounds=[[0, 0, -np.inf], [np.inf, np.inf, np.inf]])
-        A = popt[0]
-        A_std = np.sqrt(pcov[0, 0])
-        mu = popt[1]
-        mu_std = np.sqrt(pcov[1, 1])
-        l = popt[2]
-        l_std = np.sqrt(pcov[2, 2])
-        return A, A_std, mu, mu_std, l, l_std, n0
-    except:
-        return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
-
-
-def autofit_richards(x, y):
-     # fit a logistic growth sigmoid curve to the whole dataset
-    n0 = np.min([y_i for y_i in y if y_i > 0]) # center around minimum measured OD value
+    # estimate initial parameters for fitting
+    N0_estimate = np.min([y_i for y_i in y if y_i > 0])
+    A_estimate = np.max(y_log - np.log(N0_estimate))
+    mu_estimate = 0.2
     
-    # print(x.shape, y.values[17])
-    y_log = np.log(y.values / n0)
-
-    mask = y_log != 0
-    y_log = y_log[mask]
-    x = x[mask]
+    mid_ylog_val = (np.max(y_log) + np.min(y_log)) / 2
+    closest_ylog_point_idx = np.argmin(np.power(mid_ylog_val - y_log, 2))
+    l_estimate = x[closest_ylog_point_idx]
 
     try:
-        popt, pcov = curve_fit(mf.modified_richards, x, y_log, maxfev=1000000, p0=[np.max(y_log), np.median(x), 1, 0.5], bounds=[[0, 0, -np.inf, 0.01], [np.inf, np.inf, np.inf, np.inf]]) #
-        A = popt[0]
-        A_std = np.sqrt(pcov[0, 0])
-        mu = popt[1]
-        mu_std = np.sqrt(pcov[1, 1])
-        l = popt[2]
-        l_std = np.sqrt(pcov[2, 2])
-        v = popt[3]
-        v_std = pcov[3, 3]
-        return A, A_std, mu, mu_std, l, l_std, v, v_std, n0
+        popt, pcov = curve_fit(mf.modified_logistic, x, y_log, 
+                               p0=[N0_estimate, A_estimate, mu_estimate, l_estimate], 
+                               bounds=[[-np.inf, 0, 0, -np.inf], [np.inf, np.inf, np.inf, np.inf]],
+                               maxfev=10000000,
+                               )
+        N0 = popt[0]
+        N0_std = np.sqrt(pcov[0, 0])
+        A = popt[1]
+        A_std = np.sqrt(pcov[1, 1])
+        mu = popt[2]
+        mu_std = np.sqrt(pcov[2, 2])
+        l = popt[3]
+        l_std = np.sqrt(pcov[3, 3])
+        return A, A_std, mu, mu_std, l, l_std, N0, N0_std
     except:
-        return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
+        return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
 
 
-def autofit_schnute(x, y):
-     # fit a logistic growth sigmoid curve to the whole dataset
-    n0 = np.min([y_i for y_i in y if y_i > 0]) # center around minimum measured OD value
-    y_log = np.log(np.array(y) / n0)
+# def autofit_richards(x, y):
+#      # fit a logistic growth sigmoid curve to the whole dataset
+#     n0 = np.min([y_i for y_i in y if y_i > 0]) # center around minimum measured OD value
     
-    try:
-        popt, pcov = curve_fit(mf.modified_schnute, x, y_log, p0=[2, 0.5, 3, -1], maxfev=10000, ) #bounds=[[0, 0.001, -np.inf, -np.inf], [np.inf, 10, np.inf, 0]]
-        A = popt[0]
-        A_std = np.sqrt(pcov[0, 0])
-        mu = popt[1]
-        mu_std = np.sqrt(pcov[1, 1])
-        l = popt[2]
-        l_std = np.sqrt(pcov[2, 2])
-        v = popt[3]
-        v_std = pcov[3, 3]
-        return A, A_std, mu, mu_std, l, l_std, v, v_std, n0
-    except:
-        return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
+#     # print(x.shape, y.values[17])
+#     y_log = np.log(y.values / n0)
+
+#     mask = y_log != 0
+#     y_log = y_log[mask]
+#     x = x[mask]
+
+#     try:
+#         popt, pcov = curve_fit(mf.modified_richards, x, y_log, maxfev=1000000, p0=[np.max(y_log), np.median(x), 1, 0.5], bounds=[[0, 0, -np.inf, 0.01], [np.inf, np.inf, np.inf, np.inf]]) #
+#         A = popt[0]
+#         A_std = np.sqrt(pcov[0, 0])
+#         mu = popt[1]
+#         mu_std = np.sqrt(pcov[1, 1])
+#         l = popt[2]
+#         l_std = np.sqrt(pcov[2, 2])
+#         v = popt[3]
+#         v_std = pcov[3, 3]
+#         return A, A_std, mu, mu_std, l, l_std, v, v_std, n0
+#     except:
+#         return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
+
+
+# def autofit_schnute(x, y):
+#      # fit a logistic growth sigmoid curve to the whole dataset
+#     n0 = np.min([y_i for y_i in y if y_i > 0]) # center around minimum measured OD value
+#     y_log = np.log(np.array(y) / n0)
+    
+#     try:
+#         popt, pcov = curve_fit(mf.modified_schnute, x, y_log, p0=[2, 0.5, 3, -1], maxfev=10000, ) #bounds=[[0, 0.001, -np.inf, -np.inf], [np.inf, 10, np.inf, 0]]
+#         A = popt[0]
+#         A_std = np.sqrt(pcov[0, 0])
+#         mu = popt[1]
+#         mu_std = np.sqrt(pcov[1, 1])
+#         l = popt[2]
+#         l_std = np.sqrt(pcov[2, 2])
+#         v = popt[3]
+#         v_std = pcov[3, 3]
+#         return A, A_std, mu, mu_std, l, l_std, v, v_std, n0
+#     except:
+#         return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan

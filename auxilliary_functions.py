@@ -120,9 +120,9 @@ def generate_fitted_curve(t, fitting_algorithm, growth_data_sp, n_iter=1000):
     t0_idx = growth_data_sp['t0_idx']
     t1_idx = growth_data_sp['t1_idx']
     mu = growth_data_sp['mumax']
-    n0 = growth_data_sp['n0']
+    N0 = growth_data_sp['N0']
     l = growth_data_sp['t0']
-    A = growth_data_sp['carrying_capacity']
+    A = growth_data_sp['A']
     v = growth_data_sp['v']
 
     # for tight fits, need to convert lag time value to lambda parameter
@@ -147,15 +147,15 @@ def generate_fitted_curve(t, fitting_algorithm, growth_data_sp, n_iter=1000):
     # create fit values (i.e. associated y-values)
     if fitting_algorithm in ['Manual', 'Manual-like', 'Easy Linear']:
         
-        y_fit = mf.exp_function(t_fit, n0, mu)
+        y_fit = mf.exp_function(t_fit, N0, mu)
 
     elif 'Gompertz' in fitting_algorithm:
-        y_gompertz_fit = mf.modified_gompertz(t_fit, A, mu, l)
-        y_fit = np.exp(y_gompertz_fit) * n0
+        y_gompertz_fit = mf.modified_gompertz(t_fit, N0, A, mu, l)
+        y_fit = np.exp(y_gompertz_fit)
 
     elif 'Logistic' in fitting_algorithm:
-        y_logistic_fit = mf.modified_logistic(t_fit, A, mu, l)
-        y_fit = np.exp(y_logistic_fit) * n0
+        y_logistic_fit = mf.modified_logistic(t_fit, N0, A, mu, l)
+        y_fit = np.exp(y_logistic_fit)
 
     # elif fitting_algorithm == 'Richards':
     #     y_richards_fit = mf.modified_richards(t_fit, A, mu, l, v)
@@ -176,10 +176,10 @@ def generate_start_end_logphase_indicator_lines(fitting_algorithm, growth_data_s
     t1 = growth_data_sp['t1']
     t1_std = growth_data_sp['t1_std']
         
-    A = growth_data_sp['carrying_capacity']
+    A = growth_data_sp['A']
     mu = growth_data_sp['mumax']
     l = growth_data_sp['t0']
-    n0 = growth_data_sp['n0']
+    N0 = growth_data_sp['N0']
     v = growth_data_sp['v']
 
     # for tight fits, need to convert lag time value to lambda parameter
@@ -203,23 +203,23 @@ def generate_start_end_logphase_indicator_lines(fitting_algorithm, growth_data_s
         hovertext_end = ['end log-phase: {0:.2f} h'.format(t1) for x in range(n_iter)]
     
     elif fitting_algorithm == 'Easy Linear':
-        y0 = mf.exp_function(t0, n0, mu)
-        y1 = mf.exp_function(t1, n0, mu)
+        y0 = mf.exp_function(t0, N0, mu)
+        y1 = mf.exp_function(t1, N0, mu)
         hovertext_start = ['start log-phase: {0:.2f} h'.format(t0) for x in range(n_iter)]
         hovertext_end = ['end log-phase: {0:.2f} h'.format(t1) for x in range(n_iter)]
     else:
         if 'Gompertz' in fitting_algorithm:
-            y0 = np.exp(mf.modified_gompertz(t0, A, mu, l)) * n0
-            y1 = np.exp(mf.modified_gompertz(t1, A, mu, l)) * n0
+            y0 = np.exp(mf.modified_gompertz(t0, N0, A, mu, l)) 
+            y1 = np.exp(mf.modified_gompertz(t1, N0, A, mu, l))
         elif 'Logistic' in fitting_algorithm:
-            y0 = np.exp(mf.modified_logistic(t0, A, mu, l)) * n0
-            y1 = np.exp(mf.modified_logistic(t1, A, mu, l)) * n0
-        elif fitting_algorithm == 'Richards':
-            y0 = np.exp(mf.modified_richards(t0, A, mu, l, v)) * n0
-            y1 = np.exp(mf.modified_richards(t1, A, mu, l, v)) * n0
-        elif fitting_algorithm == 'Schnute':
-            y0 = np.exp(mf.modified_schnute(t0, A, mu, l, v)) * n0
-            y1 = np.exp(mf.modified_schnute(t1, A, mu, l, v)) * n0
+            y0 = np.exp(mf.modified_logistic(t0, N0, A, mu, l))
+            y1 = np.exp(mf.modified_logistic(t1, N0, A, mu, l))
+        # elif fitting_algorithm == 'Richards':
+        #     y0 = np.exp(mf.modified_richards(t0, N0, A, mu, l, v))
+        #     y1 = np.exp(mf.modified_richards(t1, N0, A, mu, l, v))
+        # elif fitting_algorithm == 'Schnute':
+        #     y0 = np.exp(mf.modified_schnute(t0, N0, A, mu, l, v))
+        #     y1 = np.exp(mf.modified_schnute(t1, N0, A, mu, l, v))
         hovertext_start = ['start log-phase: {0:.2f} &plusmn; {1:.2f} h'.format(t0, t0_std) for x in range(n_iter)]
         hovertext_end = ['end log-phase: {0:.2f} h &plusmn; {1:.2f}'.format(t1, t1_std) for x in range(n_iter)]
     y_0 = np.linspace(0, y0, n_iter)

@@ -69,7 +69,7 @@ def add_to_growth_data_dict(growth_data_data_sp,
                             doublingslog='NaN', doublingslog_std='NaN',
                             dt='NaN', dt_std='NaN',
                             A='NaN', A_std='NaN',
-                            n0='NaN',
+                            N0='NaN', N0_std='NaN',
                             doublings='NaN', 
                             Yield='NaN',
                             error='NaN',
@@ -99,12 +99,13 @@ def add_to_growth_data_dict(growth_data_data_sp,
     growth_data_data_sp['doublings_log'] = doublingslog
     growth_data_data_sp['doublings_log_std'] = doublingslog_std
 
-    # carrying capacity
-    growth_data_data_sp['carrying_capacity'] = A
-    growth_data_data_sp['carrying_capacity_std'] = A_std
+    # log carrying capacity
+    growth_data_data_sp['A'] = A
+    growth_data_data_sp['A_std'] = A_std
 
-    # minimum non-negative measured OD
-    growth_data_data_sp['n0'] = n0
+    # initial population size
+    growth_data_data_sp['N0'] = N0
+    growth_data_data_sp['N0_std'] = N0_std
 
     # doublings between lowest and highest measured OD
     growth_data_data_sp['doublings'] = doublings
@@ -185,7 +186,7 @@ def register_gd_callbacks(app):
                                         'doublings_log': 'NaN', 'doublings_log_std': 'NaN',
                                         'yield': 'NaN',
                                         'v': 'NaN', 'v_std': 'NaN',
-                                        'carrying_capacity': 'NaN', 
+                                        'A': 'NaN', 
                                         'error': 'NaN', # R2 if manual or manual-like fit, else RMSE as error measures
                                         'smoothing_window': 'NaN',
                                         }
@@ -237,7 +238,7 @@ def register_gd_callbacks(app):
             # fit exponential curve
             x = t[t0_idx: t1_idx + 1]
             y = sample_trace_blanked.iloc[t0_idx: t1_idx + 1]
-            popt_exp, pcov_exp = curve_fit(mf.exp_function, x, y, bounds=([0, 0], [5, np.inf]))
+            popt_exp, pcov_exp = curve_fit(mf.exp_function, x, y, bounds=([0, 0], [5, np.inf]), maxfev=1000000)
 
             # compute r2 value
             r2 = mf.comp_R2(np.array(x), np.log(y).values, [popt_exp[1], np.log(popt_exp[0])])
@@ -258,7 +259,7 @@ def register_gd_callbacks(app):
                                                             mu_u.n, mu_u.std_dev,
                                                             doublings_log, doublings_log_std,
                                                             dt_u.n, dt_u.std_dev,
-                                                            n0=n0, 
+                                                            N0=n0, 
                                                             doublings=doublings,
                                                             Yield=Yield,
                                                             error=r2,
@@ -436,7 +437,7 @@ def register_gd_callbacks(app):
                 t = t[nan_inf_mask]
                 
                 if sample_trace_blanked.shape[0] <= 0.1 * sample_trace_blanked_log.shape[0]:
-                    # don't analyzed samples that contain majority negative values after blanking
+                    # don't analyze samples that contain majority negative values after blanking
                     continue
 
                 # fitting
@@ -474,7 +475,7 @@ def register_gd_callbacks(app):
                                                 mu_u.n, mu_u.std_dev,
                                                 doublings_log, doublings_log_std,
                                                 dt_u.n, dt_u.std_dev,
-                                                n0=n0, 
+                                                N0=n0, 
                                                 doublings=doublings,
                                                 Yield=Yield,
                                                 error=r2,
@@ -484,16 +485,18 @@ def register_gd_callbacks(app):
                 
                 else:
                     if 'Gompertz' in fitting_algorithm:
-                        # A: carrying capacity
+                        # A: log carrying capacity
                         # mu: max growth rate
                         # l: lag time (i.e. beginning of exponential phase)
                         # t1: beginning of stationary phase (i.e. end of exponential phase)
-                        A, A_std, mu, mu_std, l, l_std, n0 = auto_fitting.autofit_gompertz(t, sample_trace_blanked)
+                        # N0: initial population size
+                        A, A_std, mu, mu_std, l, l_std, N0, N0_std  = auto_fitting.autofit_gompertz(t, sample_trace_blanked)
 
 
                         if (np.isnan(A)) or (np.isnan(mu_std)) or (mu_std == np.inf):
                             continue
                         
+                        N0_u = uc.ufloat(N0, N0_std)
                         A_u = uc.ufloat(A, A_std)
                         mu_u = uc.ufloat(mu, mu_std)
                         l_u = uc.ufloat(l, l_std)
@@ -501,35 +504,41 @@ def register_gd_callbacks(app):
                         if fitting_algorithm == 'Gompertz - tight':
                             t0_u = l_u + 0.014 * A_u / mu_u
                             t1_u = l_u + 0.72 * A_u / mu_u
-                            ratio = ucn.exp(mf.modified_gompertz(t1_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_gompertz(l_u, A_u, mu_u, l_u))
+                            ratio = ucn.exp(mf.modified_gompertz_uncertainty(t1_u, N0_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_gompertz_uncertainty(l_u, N0_u, A_u, mu_u, l_u))
                         elif fitting_algorithm == 'Gompertz - conventional':
                             t0_u = l_u
                             t1_u = (A_u + mu_u * l_u) / mu_u # end of exponential phase
-                            ratio = ucn.exp(mf.modified_gompertz(t1_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_gompertz(l_u, A_u, mu_u, l_u))
+                            ratio = ucn.exp(mf.modified_gompertz_uncertainty(t1_u, N0_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_gompertz_uncertainty(l_u, N0_u, A_u, mu_u, l_u))
                         doublings_log_u = ucn.log(ratio) / ucn.log(2) 
                     
                     elif 'Logistic' in fitting_algorithm:
-                        # A: carrying capacity
+                        # A: log carrying capacity
                         # mu: max growth rate
                         # l: lag time (i.e. beginning of exponential phase)
                         # t1: beginning of stationary phase (i.e. end of exponential phase)
-                        A, A_std, mu, mu_std, l, l_std, n0 = auto_fitting.autofit_logistic(t, sample_trace_blanked)
-
+                        # N0: initial population size
+                        A, A_std, mu, mu_std, l, l_std, N0, N0_std = auto_fitting.autofit_logistic(t, sample_trace_blanked)
+                        print(sp)
+                        print(N0, A, mu, l)
                         if (np.isnan(A)) or (np.isnan(mu_std)) or (mu_std == np.inf):
                             continue  
+
+                        N0_u = uc.ufloat(N0, N0_std)
                         A_u = uc.ufloat(A, A_std)
                         mu_u = uc.ufloat(mu, mu_std)
                         l_u = uc.ufloat(l, l_std)
                         if fitting_algorithm == 'Logistic - tight':
                             t0_u = l_u + 0.17 * A_u / mu_u
                             t1_u = l_u + 0.83 * A_u / mu_u
-                            ratio = ucn.exp(mf.modified_logistic(t1_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_logistic(l_u, A_u, mu_u, l_u))
+                            ratio = ucn.exp(mf.modified_logistic_uncertainty(t1_u, N0_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_logistic_uncertainty(l_u, N0_u, A_u, mu_u, l_u))
 
                         elif fitting_algorithm == 'Logistic - conventional':
                             t0_u = l_u
                             t1_u = (A_u + mu_u * l_u) / mu_u # end of exponential phase
-                            ratio = ucn.exp(mf.modified_logistic(t1_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_logistic(l_u, A_u, mu_u, l_u)) 
+                            ratio = ucn.exp(mf.modified_logistic_uncertainty(t1_u, N0_u, A_u, mu_u, l_u)) / ucn.exp(mf.modified_logistic_uncertainty(l_u, N0_u, A_u, mu_u, l_u))
                         doublings_log_u = ucn.log(ratio) / ucn.log(2) 
+
+
                     
                     elif 'Easy Linear' in fitting_algorithm:
                         # mu: max growth rate
@@ -539,7 +548,7 @@ def register_gd_callbacks(app):
                         
                         A_u = uc.ufloat(np.nan, np.nan)
                         # n0 = mf.lin_function(t0, mu, y_intercept) / np.exp(mf.lin_function(t0, mu, y_intercept))
-                        n0 = np.exp(y_intercept)
+                        N0_u = uc.ufloat(np.exp(y_intercept), 0)
                         t0_u = uc.ufloat(t0, 0)
                         t1_u = uc.ufloat(t1, 0)
                         mu_u = uc.ufloat(mu, mu_std)
@@ -568,7 +577,7 @@ def register_gd_callbacks(app):
                                                 ax.format_value_for_store(doublings_log_u.n), ax.format_value_for_store(doublings_log_u.std_dev),
                                                 ax.format_value_for_store(dt_u.n), ax.format_value_for_store(dt_u.std_dev),
                                                 ax.format_value_for_store(A_u.n), ax.format_value_for_store(A_u.std_dev),
-                                                n0=ax.format_value_for_store(n0), 
+                                                N0=ax.format_value_for_store(N0_u.n), N0_std=ax.format_value_for_store(N0_u.std_dev), 
                                                 doublings=ax.format_value_for_store(doublings),
                                                 Yield=ax.format_value_for_store(maxOD600) ,
                                                 fitting_mode=fitting_algorithm,
